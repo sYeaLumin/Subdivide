@@ -1,7 +1,7 @@
 #include "HalfEdge.h"
 using namespace HE;
 
-void HE::HalfedgeMesh::build(vector<Point>& vertexPos, vector<Index>& faceIndex, int vn)
+void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceIndex, int vn)
 {
 	//º”‘ÿvertex
 	//vertices.clear();
@@ -73,3 +73,18 @@ shared_ptr<Edge> HE::HalfedgeMesh::findEdge(Index edgeID)
 	return nullptr;
 }
 
+Point3d HE::HalfedgeMesh::MinCoord() const
+{
+	Point3d minCoord(1e20);
+	for (size_t i = 0; i < vertices.size(); i++)
+		minCoord = minCoord.Min(vertices[i]->pos);
+	return minCoord;
+}
+
+Point3d HE::HalfedgeMesh::MaxCoord() const
+{
+	Point3d maxCoord(-1e20);
+	for (size_t i = 0; i < vertices.size(); i++)
+		maxCoord = maxCoord.Max(vertices[i]->pos);
+	return maxCoord;
+}

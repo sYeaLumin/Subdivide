@@ -1,36 +1,34 @@
 #pragma once
-#pragma once
+
 #include <iostream>
 #include <vector>
 #include <memory>
 #include <set>
+#include "point3.h"
 using namespace std;
 
 typedef size_t Index;
 
 namespace HE {
-	class Point;
 	class Vertex;
 	class Halfedge;
 	class Edge;
 	class Face;
 
-	class Point 
-	{
-	public:
-		double p[3];
-	};
+	typedef vector<shared_ptr<Vertex>> VertexList;
+	typedef vector<shared_ptr<Edge>> EdgeList;
+	typedef vector<shared_ptr<Face>> FaceList;
 
 	class Vertex 
 	{
 	public:
-		Point pos;
+		Point3d pos;
 		weak_ptr<Halfedge> he;
 		bool isNew;
-		Point newPos;
+		Point3d newPos;
 
 	public:
-		Vertex(Point& p) :
+		Vertex(Point3d& p) :
 			pos(p) {}
 	};
 
@@ -52,7 +50,7 @@ namespace HE {
 		shared_ptr<Halfedge> he1;
 		shared_ptr<Halfedge> he2;
 		bool isNew;
-		Point newPos;
+		Point3d newPos;
 
 	public:
 		Edge() {
@@ -66,7 +64,7 @@ namespace HE {
 	{
 	public:
 		shared_ptr<Halfedge> he;
-		Point normal;
+		Point3d normal;
 	};
 
 	class VertexPair {
@@ -102,16 +100,18 @@ namespace HE {
 	};
 
 	class HalfedgeMesh {
-	public:
-		vector<shared_ptr<Vertex>> vertices;
-		vector<shared_ptr<Edge>> edges;
-		vector<shared_ptr<Face>> faces;
 	private:
+		VertexList vertices;
+		EdgeList edges;
+		FaceList faces;
 		set<VertexPair> vertexPairSet;
 
 	public:
-		void build(vector<Point>& vertexPos, vector<Index>& faceIndex, int vn = 3);
+		void build(vector<Point3d>& vertexPos, vector<Index>& faceIndex, int vn = 3);
 		shared_ptr<Edge> findEdge(Index edgeID);
+		Point3d MinCoord() const;
+		Point3d MaxCoord() const;
+		const FaceList Faces() const { return faces; }
 	};
 }
 
