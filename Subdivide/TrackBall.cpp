@@ -6,7 +6,7 @@ TrackBall::TrackBall()
 }
 
 
-void TrackBall::ScreenToWorld(const float & x, const float & y, Vector3f & vec)
+void TrackBall::ScreenToWorld(const float & x, const float & y, Point3f & vec)
 {
 	vec[0] = x;
 	vec[1] = y;
@@ -30,7 +30,7 @@ void TrackBall::Push(const float & x, const float & y)
 
 void TrackBall::Move(const float & x, const float & y)
 {
-	Vector3f currentPos3D;
+	Point3f currentPos3D;
 	ScreenToWorld(x, y, currentPos3D);
 
 	m_axis = lastPos3D.Cross(currentPos3D);
@@ -40,7 +40,7 @@ void TrackBall::Move(const float & x, const float & y)
 		m_axis.Normalize();
 		Quaternion quat;
 		quat.CreateByAngleAxis(angle, m_axis[0], m_axis[1], m_axis[2]);
-		m_rotation = m_rotation*quat.GetConjugate();					// why?
+		m_rotation = m_rotation*quat.GetConjugate();
 
 		lastPos3D = currentPos3D;
 	}

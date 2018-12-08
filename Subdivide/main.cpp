@@ -15,12 +15,19 @@ void ScreenToNCC(int x, int y, float & nccX, float & nccY);
 void SetBoundaryBox(const Point3d & bmin, const Point3d & bmax);
 void LoadMesh(HalfedgeMesh & mesh, string & modelName);
 
+HalfedgeMesh testMesh;
 int main(int argc, char *argv[]) {
+
+	string name = "test.obj";
+	for (size_t i = 0; i < 20; i++) {
+		HalfedgeMesh test;
+		LoadMesh(test, name);
+	}
+	LoadMesh(testMesh, name);
+
 	glutInit(&argc, argv);
 	InitGL();
 	InitMenu();
-
-	//
 
 	glutMainLoop();
 	system("pause");
@@ -32,10 +39,8 @@ double xtrans = 0, ytrans = 0;
 void LoadMesh(HalfedgeMesh & mesh, string & modelName)
 {
 	cout << "LoadMesh : " << modelName << endl;
-	//TODO:读取obj格式
-
-	//TODP:加载HalfedgeMesh
-
+	testMesh.Load(modelName);
+	SetBoundaryBox(testMesh.minCoord, testMesh.maxCoord);
 	xtrans = ytrans = 0.0;
 }
 
@@ -92,8 +97,8 @@ void DrawFlatShaded(HalfedgeMesh & mesh)
 	for (size_t i = 0; i<fList.size(); i++) {
 		shared_ptr<Face> f = fList[i];
 		const Point3d & pos1 = f->he->v->pos;
-		const Point3d & pos2 = f->he->v->pos;
-		const Point3d & pos3 = f->he->v->pos;
+		const Point3d & pos2 = f->he->next->v->pos;
+		const Point3d & pos3 = f->he->next->next->v->pos;
 		Point3d normal = (pos2 - pos1).Cross(pos3 - pos1);
 		normal /= normal.L2Norm();
 		glColor3d(0.4f, 0.4f, 0.4f);
@@ -129,8 +134,8 @@ void DrawMeshWithDifferentColor(HalfedgeMesh & mesh)
 	for (size_t i = 0; i<fList.size(); i++) {
 		shared_ptr<Face> f = fList[i];
 		const Point3d & pos1 = f->he->v->pos;
-		const Point3d & pos2 = f->he->v->pos;
-		const Point3d & pos3 = f->he->v->pos;
+		const Point3d & pos2 = f->he->next->v->pos;
+		const Point3d & pos3 = f->he->next->next->v->pos;
 
 		int r = (i & 0x000000FF) >> 0;
 		int g = (i & 0x0000FF00) >> 8;
@@ -242,7 +247,7 @@ void DisplayFunc()
 	glMultMatrixf(rotation);
 	glTranslated(-g_center[0], -g_center[1], -g_center[2]);
 	
-	DrawFlatShaded(meshST);
+	DrawFlatShaded(testMesh);
 
 	glPopMatrix();
 
@@ -272,7 +277,6 @@ vector<int> pos;
 void MouseFunc(int button, int state, int x, int y)
 {
 	float nccX, nccY;
-	//if (button == GLUT_RIGHT_BUTTON) exit(0);
 	if (button == GLUT_LEFT_BUTTON)
 	{
 		switch (state)
@@ -330,7 +334,6 @@ void MotionFunc(int x, int y)
 
 void MouseWheelFunc(int button, int dir, int x, int y)
 {
-	//static double zDelta = 2;
 	if (sdepth > zNear  && dir>0)
 	{
 		sdepth -= zDelta;

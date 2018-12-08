@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include "Quaternion.h"
-#include "vector3.h"
+#include "point3.h"
 using namespace std;
 
 // the coordinate should be NCC;
@@ -19,14 +19,14 @@ public:
 public:
 	Quaternion m_rotation;
 private:
-	void ScreenToWorld(const float & x, const float & y, Vector3f & vec);
+	void ScreenToWorld(const float & x, const float & y, Point3f & vec);
 
 public:
-	Vector3f m_axis;
+	Point3f m_axis;
 	float angle;
 	//float m_angularVelocity;
 
-	Vector3f lastPos3D;
+	Point3f lastPos3D;
 };
 
 

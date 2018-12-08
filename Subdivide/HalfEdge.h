@@ -1,8 +1,11 @@
 #pragma once
 
 #include <iostream>
+#include <fstream>
+#include <strstream>
 #include <vector>
 #include <memory>
+#include <string>
 #include <set>
 #include "point3.h"
 using namespace std;
@@ -100,6 +103,8 @@ namespace HE {
 	};
 
 	class HalfedgeMesh {
+	public:
+		Point3d maxCoord, minCoord;
 	private:
 		VertexList vertices;
 		EdgeList edges;
@@ -107,11 +112,14 @@ namespace HE {
 		set<VertexPair> vertexPairSet;
 
 	public:
+		bool Load(string fileName);
 		void build(vector<Point3d>& vertexPos, vector<Index>& faceIndex, int vn = 3);
 		shared_ptr<Edge> findEdge(Index edgeID);
 		Point3d MinCoord() const;
 		Point3d MaxCoord() const;
 		const FaceList Faces() const { return faces; }
+	private:
+		bool LoadObj(string fileName, vector<Point3d>& vertexPos, vector<Index>& faceIndex);
 	};
 }
 

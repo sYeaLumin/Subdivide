@@ -1,6 +1,63 @@
 #include "HalfEdge.h"
 using namespace HE;
 
+bool HE::HalfedgeMesh::Load(string fileName)
+{
+	vector<Point3d> vertexPosList;
+	vector<Index> faceIndexList;
+	string modelExtensions = fileName.substr(fileName.length() - 3, fileName.length());
+	if (strcmp(modelExtensions.c_str(), "obj") == 0) {
+		if (LoadObj(fileName, vertexPosList, faceIndexList)) {
+			cout << "Load " << fileName << endl;
+			build(vertexPosList, faceIndexList, 3);
+			minCoord = MinCoord();
+			maxCoord = MaxCoord();
+		}
+		else return false;
+	}
+	//vector<Point3d>().swap(vertexPosList);
+	//vector<Index>().swap(faceIndexList);
+	return true;
+}
+
+bool HE::HalfedgeMesh::LoadObj(string fileName, vector<Point3d>& vertexPos, vector<Index>& faceIndex)
+{
+	if (fileName.empty())
+		return false;
+	ifstream ifs(fileName);
+	if (ifs.fail())
+		return false;
+
+	char buf[1024], type[1024];
+	do
+	{
+		ifs.getline(buf, 1024);
+		istrstream iss(buf);
+		iss >> type;
+
+		// 顶点
+		if (strcmp(type, "v") == 0)
+		{
+			double x, y, z;
+			iss >> x >> y >> z;
+			vertexPos.push_back(Point3d(x, y, z));
+		}
+
+		// 面
+		else if (strcmp(type, "f") == 0)
+		{
+			Index index[3];
+			iss >> index[0] >> index[1] >> index[2];
+			faceIndex.push_back(Index(index[0] - 1));
+			faceIndex.push_back(Index(index[1] - 1));
+			faceIndex.push_back(Index(index[2] - 1));
+		}
+	} while (!ifs.eof());
+	ifs.close();
+
+	return true;
+}
+
 void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceIndex, int vn)
 {
 	//加载vertex
@@ -22,12 +79,13 @@ void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceInde
 			idxs[j] = i*vn + j;
 			hes[j] = make_shared<Halfedge>();
 		}
+		
 		newf = make_shared<Face>();
 		newf->he = hes[0];
 		faces.push_back(newf);
 		///链接halfedge的顶点、面、前后半边
 		for (size_t j = 0; j < vn; j++) {
-			hes[j]->v = vertices[idxs[j]];
+			hes[j]->v = vertices[faceIndex[idxs[j]]];
 			hes[j]->f = newf;
 			hes[j]->prev = hes[(j + vn - 1) % vn];
 			hes[j]->next = hes[(j + 1) % vn];
@@ -59,9 +117,9 @@ void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceInde
 	delete[] hes;
 
 	if (vertexPairSet.size() == 0) 
-		cout << "HalfedgeMesh Build Success !" << endl;
+		cout << "HalfedgeMesh Build : Close surface !" << endl;
 	else
-		cout << "HalfedgeMesh Build Wrong !" << endl;
+		cout << "HalfedgeMesh Build : Open surface  !" << endl;
 }
 
 shared_ptr<Edge> HE::HalfedgeMesh::findEdge(Index edgeID)
