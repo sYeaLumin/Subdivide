@@ -39,7 +39,7 @@ namespace HE {
 	{
 	public:
 		weak_ptr<Halfedge> twin;
-		shared_ptr<Halfedge> next;
+		weak_ptr<Halfedge> next;
 		weak_ptr<Halfedge> prev;
 		shared_ptr<Vertex> v;
 		weak_ptr<Edge> e;

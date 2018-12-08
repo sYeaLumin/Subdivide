@@ -128,7 +128,7 @@
   <ItemGroup>
     <ClCompile Include="HalfEdge.cpp" />
     <ClCompile Include="Quaternion.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="test.cpp" />
     <ClCompile Include="TrackBall.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

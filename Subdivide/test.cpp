@@ -18,11 +18,7 @@ void LoadMesh(HalfedgeMesh & mesh, string & modelName);
 HalfedgeMesh testMesh;
 int main(int argc, char *argv[]) {
 
-	string name = "test.obj";
-	for (size_t i = 0; i < 20; i++) {
-		HalfedgeMesh test;
-		LoadMesh(test, name);
-	}
+	string name = "obj\\spoon.obj";
 	LoadMesh(testMesh, name);
 
 	glutInit(&argc, argv);
@@ -39,8 +35,8 @@ double xtrans = 0, ytrans = 0;
 void LoadMesh(HalfedgeMesh & mesh, string & modelName)
 {
 	cout << "LoadMesh : " << modelName << endl;
-	testMesh.Load(modelName);
-	SetBoundaryBox(testMesh.minCoord, testMesh.maxCoord);
+	mesh.Load(modelName);
+	SetBoundaryBox(mesh.minCoord, mesh.maxCoord);
 	xtrans = ytrans = 0.0;
 }
 
@@ -97,8 +93,8 @@ void DrawFlatShaded(HalfedgeMesh & mesh)
 	for (size_t i = 0; i<fList.size(); i++) {
 		shared_ptr<Face> f = fList[i];
 		const Point3d & pos1 = f->he->v->pos;
-		const Point3d & pos2 = f->he->next->v->pos;
-		const Point3d & pos3 = f->he->next->next->v->pos;
+		const Point3d & pos2 = f->he->next.lock()->v->pos;
+		const Point3d & pos3 = f->he->next.lock()->next.lock()->v->pos;
 		Point3d normal = (pos2 - pos1).Cross(pos3 - pos1);
 		normal /= normal.L2Norm();
 		glColor3d(0.4f, 0.4f, 0.4f);
@@ -134,8 +130,8 @@ void DrawMeshWithDifferentColor(HalfedgeMesh & mesh)
 	for (size_t i = 0; i<fList.size(); i++) {
 		shared_ptr<Face> f = fList[i];
 		const Point3d & pos1 = f->he->v->pos;
-		const Point3d & pos2 = f->he->next->v->pos;
-		const Point3d & pos3 = f->he->next->next->v->pos;
+		const Point3d & pos2 = f->he->next.lock()->v->pos;
+		const Point3d & pos3 = f->he->next.lock()->next.lock()->v->pos;
 
 		int r = (i & 0x000000FF) >> 0;
 		int g = (i & 0x0000FF00) >> 8;
