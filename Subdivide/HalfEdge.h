@@ -27,7 +27,7 @@ namespace HE {
 	public:
 		Point3d pos;
 		weak_ptr<Halfedge> he;
-		bool isNew;
+		bool isNew = false;
 		Point3d newPos;
 
 	public:
@@ -52,8 +52,9 @@ namespace HE {
 		Index ID;
 		shared_ptr<Halfedge> he1;
 		shared_ptr<Halfedge> he2;
-		bool isNew;
+		bool isNew = false;
 		Point3d newPos;
+		bool isBoundary = false;
 
 	public:
 		Edge() {
@@ -114,12 +115,15 @@ namespace HE {
 	public:
 		bool Load(string fileName);
 		void build(vector<Point3d>& vertexPos, vector<Index>& faceIndex, int vn = 3);
+		void LoopSubdivision(int iter);
+
 		shared_ptr<Edge> findEdge(Index edgeID);
 		Point3d MinCoord() const;
 		Point3d MaxCoord() const;
 		const FaceList Faces() const { return faces; }
 	private:
 		bool LoadObj(string fileName, vector<Point3d>& vertexPos, vector<Index>& faceIndex);
+		void _loopSubdivision();
 	};
 }
 

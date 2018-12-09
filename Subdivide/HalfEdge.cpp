@@ -58,6 +58,14 @@ bool HE::HalfedgeMesh::LoadObj(string fileName, vector<Point3d>& vertexPos, vect
 	return true;
 }
 
+void HE::HalfedgeMesh::_loopSubdivision()
+{
+	//计算原始顶点的新坐标，存入newPos
+	for (size_t i = 0; i < vertices.size(); i++) {
+
+	}
+}
+
 void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceIndex, int vn)
 {
 	//加载vertex
@@ -118,8 +126,16 @@ void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceInde
 
 	if (vertexPairSet.size() == 0) 
 		cout << "HalfedgeMesh Build : Close surface !" << endl;
-	else
+	else {
 		cout << "HalfedgeMesh Build : Open surface  !" << endl;
+		set<VertexPair>::iterator iter = vertexPairSet.begin();
+		shared_ptr<Edge> e;
+		while (iter!= vertexPairSet.end())
+		{
+			e = findEdge((*iter).eID);
+			e->isBoundary = true;
+		}
+	}
 }
 
 shared_ptr<Edge> HE::HalfedgeMesh::findEdge(Index edgeID)
