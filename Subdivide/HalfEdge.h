@@ -39,10 +39,10 @@ namespace HE {
 	class Halfedge
 	{
 	public:
+		shared_ptr<Vertex> v;
 		weak_ptr<Halfedge> twin;
 		weak_ptr<Halfedge> next;
 		weak_ptr<Halfedge> prev;
-		shared_ptr<Vertex> v;
 		weak_ptr<Edge> e;
 		weak_ptr<Face> f;
 
@@ -61,6 +61,7 @@ namespace HE {
 		bool ifCalNewPos = false;
 		Point3d newPos;
 		bool isBoundary = false;
+		bool ifNeedDelete = false;
 
 	public:
 		Edge() {
@@ -74,6 +75,7 @@ namespace HE {
 	public:
 		shared_ptr<Halfedge> he;
 		Point3d normal;
+		bool ifNeedDelete = false;
 
 	public:
 		Face(shared_ptr<Halfedge>& _he) {
@@ -136,6 +138,8 @@ namespace HE {
 		void _loopSubdivision();
 		double _beta(int n);
 		void _updateVertexInterior(shared_ptr<Halfedge>& he);
+		bool _splitEdge(shared_ptr<Edge>& eToSplit);
+		void _linkHEInTriWithFace(shared_ptr<Face>& f, shared_ptr<Halfedge>& he0, shared_ptr<Halfedge>& he1, shared_ptr<Halfedge>& he2);
 	};
 }
 

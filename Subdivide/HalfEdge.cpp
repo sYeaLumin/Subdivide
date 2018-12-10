@@ -114,6 +114,16 @@ void HE::HalfedgeMesh::_loopSubdivision()
 	}
 
 	// split 
+	int oldEdgeNum = edges.size();
+	vector<shared_ptr<Edge>>::iterator oldEdgeEnd = edges.end();
+	vector<shared_ptr<Face>>::iterator oldFaceEnd = faces.end();
+	for (int i = 0; i < oldEdgeNum; i++) {
+		if (!_splitEdge(edges[i]))
+			cout << "Split Edge " << i << " failed!" << endl;
+	}
+	// 删除旧边和旧面
+	edges.erase(edges.begin(), oldEdgeEnd);
+	faces.erase(faces.begin(), oldFaceEnd);
 
 	// flip
 }
@@ -138,6 +148,113 @@ void HE::HalfedgeMesh::_updateVertexInterior(shared_ptr<Halfedge>& he)
 	double beta = _beta(numOfTri);
 	he->v->newPos = (1 - numOfTri*beta)*he->v->pos + beta*sumOfVAround;
 	he->v->ifCalNewPos = true;
+}
+
+bool HE::HalfedgeMesh::_splitEdge(shared_ptr<Edge>& eToSplit)
+{
+	if (!eToSplit->ifCalNewPos)
+		return false;
+	shared_ptr<Vertex>  newV;
+	shared_ptr<Face> oldF[2];
+	shared_ptr<Face> newF[4];
+	shared_ptr<Halfedge> oldHE[4];
+	shared_ptr<Halfedge> newHE[8];
+	shared_ptr<Edge> newE[4];
+
+	// 如果是边界
+	if (eToSplit->isBoundary) {
+		newV = make_shared<Vertex>(eToSplit->newPos);
+		oldHE[0] = eToSplit->he1->next.lock();
+		oldHE[1] = eToSplit->he1->prev.lock();
+		// RightTri
+		newHE[0] = make_shared<Halfedge>(oldHE[1]->v);
+		newHE[1] = make_shared<Halfedge>(newV);
+		newF[0] = make_shared<Face>();
+		_linkHEInTriWithFace(newF[0], newHE[0], newHE[1], oldHE[0]);
+		// LeftTri
+		newHE[2] = make_shared<Halfedge>(eToSplit->he1->v);
+		newHE[3] = make_shared<Halfedge>(newV);
+		newF[1] = make_shared<Face>();
+		_linkHEInTriWithFace(newF[1], newHE[2], newHE[3], oldHE[1]);
+		// 插入的新边
+		newE[0] = make_shared<Edge>();
+		newE[0]->he1 = newHE[0];
+		newE[0]->he2 = newHE[3];
+		newHE[0]->e = newE[0];
+		newHE[3]->e = newE[0];
+		newHE[0]->twin = newHE[3];
+		newHE[3]->twin = newHE[0];
+		// 断开形成的两条新边
+		newE[1] = make_shared<Edge>();
+		newE[1]->he1 = newHE[1];
+		newE[1]->isBoundary = true;
+		newHE[1]->e = newE[1];
+		newE[2] = make_shared<Edge>();
+		newE[2]->he1 = newHE[2];
+		newE[2]->isBoundary = true;
+		newHE[2]->e = newE[2];
+		// 断开原Face和Edge的相关link，确保不会再访问
+		eToSplit->he1->f.lock()->he = nullptr;
+		eToSplit->he1->f.lock()->ifNeedDelete = true;
+		eToSplit->he1 = nullptr;
+		eToSplit->ifNeedDelete = true;
+		// 加入新Face和Edge
+		for (size_t i = 0; i < 3; i++)
+			edges.push_back(newE[i]);
+		for (size_t i = 0; i < 2; i++)
+			faces.push_back(newF[i]);
+	}
+	// 如果不是边界
+	else {
+		newV = make_shared<Vertex>(eToSplit->newPos);
+		oldHE[0] = eToSplit->he2->next.lock();
+		oldHE[1] = eToSplit->he2->prev.lock();
+		oldHE[2] = eToSplit->he1->next.lock();
+		oldHE[3] = eToSplit->he1->prev.lock();
+		for (size_t i = 0; i < 4; i++) {
+			newHE[2 * i] = make_shared<Halfedge>(oldHE[(i + 1) % 4]->v);
+			newHE[2 * i + 1] = make_shared<Halfedge>(newV);
+			newF[i] = make_shared<Face>();
+			_linkHEInTriWithFace(newF[i], newHE[2 * i], newHE[2 * i + 1], oldHE[i]);
+		}
+		for (size_t i = 0; i < 4; i++) {
+			newE[i] = make_shared<Edge>();
+			newE[i]->he1 = newHE[2 * i];
+			newE[i]->he2 = newHE[(2 * i + 3) % 8];
+			newHE[2 * i]->e = newE[i];
+			newHE[(2 * i + 3) % 8]->e = newE[i];
+			newHE[2 * i]->twin = newHE[(2 * i + 3) % 8];
+			newHE[(2 * i + 3) % 8]->twin = newHE[2 * i];
+		}
+		// 断开原Face和Edge的相关link，确保不会再访问
+		eToSplit->he1->f.lock()->he = nullptr;
+		eToSplit->he2->f.lock()->he = nullptr;
+		eToSplit->he1->f.lock()->ifNeedDelete = true;
+		eToSplit->he1 = nullptr;
+		eToSplit->he2 = nullptr;
+		eToSplit->ifNeedDelete = true;
+		// 加入新Face和Edge
+		for (size_t i = 0; i < 4; i++) {
+			edges.push_back(newE[i]);
+			faces.push_back(newF[i]);
+		}
+	}
+
+	return true;
+}
+
+void HE::HalfedgeMesh::_linkHEInTriWithFace(shared_ptr<Face>& f, shared_ptr<Halfedge>& he0, shared_ptr<Halfedge>& he1, shared_ptr<Halfedge>& he2)
+{
+	he0->next = he1;
+	he1->next = he2;
+	he2->next = he0;
+	he0->prev = he2;
+	he1->prev = he0;
+	he2->prev = he1;
+	he0->f = f;
+	he1->f = f;
+	he2->f = f;
+	f->he = he0;
 }
 
 void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceIndex, int vn)
