@@ -113,21 +113,9 @@ void HE::HalfedgeMesh::_loopSubdivision()
 		}
 	}
 
-	// 增加新面片
-	EdgeList newEdges;
-	FaceList newFaces;
-	shared_ptr<Vertex> oldV[3];
-	shared_ptr<Vertex> newV[3];
-	for (int i = 0; i < faces.size(); i++) {
-		shared_ptr<Face> currF = faces[i];
-		oldV[0] = currF->he->v;
-		oldV[1] = currF->he->next.lock()->v;
-		oldV[2] = currF->he->prev.lock()->v;
-		newV[0] = make_shared<Vertex>(currF->he->e.lock()->newPos);
-		newV[1] = make_shared<Vertex>(currF->he->next.lock()->e.lock()->newPos);
-		newV[2] = make_shared<Vertex>(currF->he->prev.lock()->e.lock()->newPos);
+	// split 
 
-	}
+	// flip
 }
 
 double HE::HalfedgeMesh::_beta(int n)

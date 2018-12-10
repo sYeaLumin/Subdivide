@@ -23,7 +23,7 @@ namespace HE {
 	typedef vector<shared_ptr<Edge>> EdgeList;
 	typedef vector<shared_ptr<Face>> FaceList;
 
-	class Vertex 
+	class Vertex
 	{
 	public:
 		Point3d pos;
@@ -45,9 +45,14 @@ namespace HE {
 		shared_ptr<Vertex> v;
 		weak_ptr<Edge> e;
 		weak_ptr<Face> f;
+
+	public:
+		Halfedge(shared_ptr<Vertex>&  _v) {
+			v = _v;
+		}
 	};
 
-	class Edge 
+	class Edge
 	{
 	public:
 		Index ID;
@@ -69,6 +74,11 @@ namespace HE {
 	public:
 		shared_ptr<Halfedge> he;
 		Point3d normal;
+
+	public:
+		Face(shared_ptr<Halfedge>& _he) {
+			he = _he;
+		}
 	};
 
 	class VertexPair {
