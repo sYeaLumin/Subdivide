@@ -60,15 +60,101 @@ bool HE::HalfedgeMesh::LoadObj(string fileName, vector<Point3d>& vertexPos, vect
 
 void HE::HalfedgeMesh::_loopSubdivision()
 {
-	//计算原始顶点的新坐标，存入newPos
-	for (size_t i = 0; i < vertices.size(); i++) {
+	shared_ptr<Vertex> v1, v2, vUp, vDown;
+	shared_ptr<Vertex> vAnother;
+	shared_ptr<Halfedge> tmp;
+	Point3d sumOfVAround;
+	double beta;
+	int numOfTri;
+
+	// 计算所有新位置
+	for (int  i = 0; i < edges.size(); i++) {
+		shared_ptr<Edge> e = edges[i];
+		// 如果是边界
+		if (e->isBoundary) { 
+			// 计算中点
+			v1 = e->he1->v;
+			v2 = e->he1->prev.lock()->v;
+			e->newPos = 0.5*(v1->pos + v2->pos);
+			e->ifCalNewPos = true;
+			// 计算顶点更新坐标，存入newPos
+			if (!v1->ifCalNewPos) {
+				tmp = e->he1->prev.lock();
+				while (tmp->twin.lock() !=nullptr)
+					tmp = tmp->twin.lock()->prev.lock();
+				vAnother = tmp->v;
+				v1->newPos = 0.125*(vAnother->pos + v2->pos) + 0.75*v1->pos;
+				v1->ifCalNewPos = true;
+			}
+			if (!v2->ifCalNewPos) {
+				tmp = e->he1->next.lock();
+				while (tmp->twin.lock() != nullptr)
+					tmp = tmp->twin.lock()->next.lock();
+				vAnother = tmp->next.lock()->v;
+				v2->newPos = 0.125*(vAnother->pos + v1->pos) + 0.75*v2->pos;
+				v2->ifCalNewPos = true;
+			}
+		}
+		// 如果不是边界
+		else { 
+			// 计算边中点
+			v1 = e->he1->v;
+			v2 = e->he2->v;
+			vUp = e->he1->prev.lock()->v;
+			vDown = e->he2->prev.lock()->v;
+			e->newPos = 0.375*(v1->pos + v2->pos) + 0.125*(vUp->pos + vDown->pos);
+			e->ifCalNewPos = true;
+			// 计算顶点更新坐标，存入newPos
+			if (!v1->ifCalNewPos && !v1->isOnBoundary)
+				_updateVertexInterior(e->he1);
+
+			if (!v2->ifCalNewPos && !v2->isOnBoundary)
+				_updateVertexInterior(e->he2);
+		}
+	}
+
+	// 增加新面片
+	EdgeList newEdges;
+	FaceList newFaces;
+	shared_ptr<Vertex> oldV[3];
+	shared_ptr<Vertex> newV[3];
+	for (int i = 0; i < faces.size(); i++) {
+		shared_ptr<Face> currF = faces[i];
+		oldV[0] = currF->he->v;
+		oldV[1] = currF->he->next.lock()->v;
+		oldV[2] = currF->he->prev.lock()->v;
+		newV[0] = make_shared<Vertex>(currF->he->e.lock()->newPos);
+		newV[1] = make_shared<Vertex>(currF->he->next.lock()->e.lock()->newPos);
+		newV[2] = make_shared<Vertex>(currF->he->prev.lock()->e.lock()->newPos);
 
 	}
 }
 
+double HE::HalfedgeMesh::_beta(int n)
+{
+	double nn = 1.0 / n;
+	return nn*(0.625 - pow(0.375 + 0.25*cos(2 * PI*nn), 2));
+}
+
+void HE::HalfedgeMesh::_updateVertexInterior(shared_ptr<Halfedge>& he)
+{
+	int numOfTri = 1;
+	Point3d sumOfVAround = he->twin.lock()->v->pos;
+	shared_ptr<Halfedge> tmp = he->prev.lock()->twin.lock();
+	while (tmp != he)
+	{
+		numOfTri += 1;
+		sumOfVAround += tmp->next.lock()->v->pos;
+		tmp = tmp->prev.lock()->twin.lock();
+	}
+	double beta = _beta(numOfTri);
+	he->v->newPos = (1 - numOfTri*beta)*he->v->pos + beta*sumOfVAround;
+	he->v->ifCalNewPos = true;
+}
+
 void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceIndex, int vn)
 {
-	//加载vertex
+	// 加载vertex
 	//vertices.clear();
 	shared_ptr<Vertex> v;
 	for (size_t i = 0; i < vertexPos.size(); i++) {
@@ -76,13 +162,13 @@ void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceInde
 		vertices.push_back(v);
 	}
 
-	//加载face
+	// 加载face
 	int faceNum = faceIndex.size() / vn;
 	Index  *idxs = new Index[vn];
 	shared_ptr<Halfedge> *hes = new shared_ptr<Halfedge>[vn];
 	shared_ptr<Face> newf;
 	for (size_t i = 0; i < faceNum; i++) {
-		///创建halfedge
+		// 创建halfedge
 		for (size_t j = 0; j < vn; j++){
 			idxs[j] = i*vn + j;
 			hes[j] = make_shared<Halfedge>();
@@ -91,27 +177,27 @@ void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceInde
 		newf = make_shared<Face>();
 		newf->he = hes[0];
 		faces.push_back(newf);
-		///链接halfedge的顶点、面、前后半边
+		// 链接halfedge的顶点、面、前后半边
 		for (size_t j = 0; j < vn; j++) {
 			hes[j]->v = vertices[faceIndex[idxs[j]]];
 			hes[j]->f = newf;
 			hes[j]->prev = hes[(j + vn - 1) % vn];
 			hes[j]->next = hes[(j + 1) % vn];
 		}
-		///链接halfedge的twin边、Edge
+		// 链接halfedge的twin边、Edge
 		set<VertexPair>::iterator iter;
 		for (size_t j = 0; j < vn; j++) {
 			iter = vertexPairSet.find(VertexPair(faceIndex[idxs[(j + 1) % vn]], faceIndex[idxs[j]]));
-			///如果找到了对应的边，则对应半边已经加载
+			// 如果找到了对应的边，则对应半边已经加载
 			if (iter != vertexPairSet.end()) {
 				shared_ptr<Edge> edge = findEdge((*iter).eID);
 				hes[j]->e = edge;
 				hes[j]->twin = edge->he1;
 				edge->he2 = hes[j];
 				edge->he1->twin = hes[j];
-				vertexPairSet.erase(iter);///删除顶点对
+				vertexPairSet.erase(iter); //删除顶点对
 			}
-			///如果没找到，则对应半边未加载
+			// 如果没找到，则对应半边未加载
 			else {
 				shared_ptr<Edge> edge = make_shared<Edge>();
 				hes[j]->e = edge;
@@ -134,6 +220,8 @@ void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceInde
 		{
 			e = findEdge((*iter).eID);
 			e->isBoundary = true;
+			e->he1->v->isOnBoundary = true;
+			e->he1->next.lock()->v->isOnBoundary = true;
 		}
 	}
 }

@@ -8,6 +8,7 @@
 #include <string>
 #include <set>
 #include "point3.h"
+#define PI 3.1415926
 using namespace std;
 
 typedef size_t Index;
@@ -26,9 +27,9 @@ namespace HE {
 	{
 	public:
 		Point3d pos;
-		weak_ptr<Halfedge> he;
-		bool isNew = false;
+		bool ifCalNewPos = false;
 		Point3d newPos;
+		bool isOnBoundary = false;
 
 	public:
 		Vertex(Point3d& p) :
@@ -52,7 +53,7 @@ namespace HE {
 		Index ID;
 		shared_ptr<Halfedge> he1;
 		shared_ptr<Halfedge> he2;
-		bool isNew = false;
+		bool ifCalNewPos = false;
 		Point3d newPos;
 		bool isBoundary = false;
 
@@ -60,7 +61,6 @@ namespace HE {
 		Edge() {
 			static Index id = 0;
 			ID = id++;
-			isNew = false;
 		}
 	};
 
@@ -124,6 +124,8 @@ namespace HE {
 	private:
 		bool LoadObj(string fileName, vector<Point3d>& vertexPos, vector<Index>& faceIndex);
 		void _loopSubdivision();
+		double _beta(int n);
+		void _updateVertexInterior(shared_ptr<Halfedge>& he);
 	};
 }
 
