@@ -133,7 +133,18 @@ void HE::HalfedgeMesh::_loopSubdivision()
 		else
 			iter++;
 	}
+
 	// flip
+	int num = 0;
+	for (int i = 0; i < edges.size(); i++) {
+		if (edges[i]->ifNew &&
+			edges[i]->he1->v->ifCalNewPos !=
+			edges[i]->he2->v->ifCalNewPos){
+			_flipEdge(edges[i]);
+			num++;
+		}
+	}
+	cout << "Number of flip : " << num << endl;
 }
 
 double HE::HalfedgeMesh::_beta(int n)
@@ -192,6 +203,8 @@ bool HE::HalfedgeMesh::_splitEdge(shared_ptr<Edge>& eToSplit)
 		newHE[3]->e = newE[0];
 		newHE[0]->twin = newHE[3];
 		newHE[3]->twin = newHE[0];
+		// 用于flip的判断
+		newE[0]->ifNew = true;
 		// 断开形成的两条新边
 		newE[1] = make_shared<Edge>();
 		newE[1]->he1 = newHE[1];
@@ -235,6 +248,9 @@ bool HE::HalfedgeMesh::_splitEdge(shared_ptr<Edge>& eToSplit)
 			newHE[2 * i]->twin = newHE[(2 * i + 3) % 8];
 			newHE[(2 * i + 3) % 8]->twin = newHE[2 * i];
 		}
+		// 用于flip的判断
+		newE[0]->ifNew = true;
+		newE[2]->ifNew = true;
 		// 断开原Face和Edge的相关link，确保不会再访问
 		eToSplit->he1->f.lock()->he = nullptr;
 		eToSplit->he2->f.lock()->he = nullptr;
@@ -250,6 +266,30 @@ bool HE::HalfedgeMesh::_splitEdge(shared_ptr<Edge>& eToSplit)
 		}
 	}
 
+	return true;
+}
+
+bool HE::HalfedgeMesh::_flipEdge(shared_ptr<Edge>& eToFlip)
+{
+	shared_ptr<Vertex> vUp, vDown;
+	shared_ptr<Halfedge> fixHE[4];
+	shared_ptr<Halfedge> flipHE1, flipHE2;
+	shared_ptr<Face> f1, f2;
+	vUp = eToFlip->he1->prev.lock()->v;
+	vDown = eToFlip->he2->prev.lock()->v;
+	flipHE1 = eToFlip->he1;
+	flipHE2 = eToFlip->he2;
+	fixHE[0] = flipHE1->next.lock();
+	fixHE[1] = flipHE1->prev.lock();
+	fixHE[2] = flipHE2->next.lock();
+	fixHE[3] = flipHE2->prev.lock();
+	f1 = flipHE1->f.lock();
+	f2 = flipHE2->f.lock();
+	// 重新链接
+	flipHE1->v = vDown;
+	flipHE2->v = vUp;
+	_linkHEInTriWithFace(f1, flipHE1, fixHE[1], fixHE[2]);
+	_linkHEInTriWithFace(f2, flipHE2, fixHE[3], fixHE[0]);
 	return true;
 }
 

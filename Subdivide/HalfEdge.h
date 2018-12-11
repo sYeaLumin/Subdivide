@@ -60,6 +60,7 @@ namespace HE {
 		shared_ptr<Halfedge> he1;
 		shared_ptr<Halfedge> he2;
 		bool ifCalNewPos = false;
+		bool ifNew = false;
 		Point3d newPos;
 		bool isBoundary = false;
 		bool ifNeedDelete = false;
@@ -142,6 +143,7 @@ namespace HE {
 		double _beta(int n);
 		void _updateVertexInterior(shared_ptr<Halfedge>& he);
 		bool _splitEdge(shared_ptr<Edge>& eToSplit);
+		bool _flipEdge(shared_ptr<Edge>& eToFlip);
 		void _linkHEInTriWithFace(shared_ptr<Face>& f, shared_ptr<Halfedge>& he0, shared_ptr<Halfedge>& he1, shared_ptr<Halfedge>& he2);
 	};
 }
