@@ -67,11 +67,19 @@ void HE::HalfedgeMesh::_loopSubdivision()
 	double beta;
 	int numOfTri;
 
+	if (vertices.size() > 0) {
+		for (const auto &v : vertices)
+			v->ifCalNewPos = false;
+		for (const auto &e : edges) {
+			e->ifCalNewPos = false;
+			e->ifNew = false;
+		}
+	}
+
 	// 计算所有新位置
-	for (int  i = 0; i < edges.size(); i++) {
-		shared_ptr<Edge> e = edges[i];
+	for (auto &e : edges) {
 		// 如果是边界
-		if (e->isBoundary) { 
+		if (e->isBoundary) {
 			// 计算中点
 			v1 = e->he1->v;
 			v2 = e->he1->prev.lock()->v;
@@ -80,7 +88,7 @@ void HE::HalfedgeMesh::_loopSubdivision()
 			// 计算顶点更新坐标，存入newPos
 			if (!v1->ifCalNewPos) {
 				tmp = e->he1->prev.lock();
-				while (tmp->twin.lock() !=nullptr)
+				while (tmp->twin.lock() != nullptr)
 					tmp = tmp->twin.lock()->prev.lock();
 				vAnother = tmp->v;
 				v1->newPos = 0.125*(vAnother->pos + v2->pos) + 0.75*v1->pos;
@@ -96,7 +104,7 @@ void HE::HalfedgeMesh::_loopSubdivision()
 			}
 		}
 		// 如果不是边界
-		else { 
+		else {
 			// 计算边中点
 			v1 = e->he1->v;
 			v2 = e->he2->v;
@@ -114,7 +122,6 @@ void HE::HalfedgeMesh::_loopSubdivision()
 	}
 
 	// split 
-	cout << "_loopSubdivision Old edges number : " << edges.size() << endl;
 	int oldEdgeNum = edges.size();
 	for (int i = 0; i < oldEdgeNum; i++) {
 		if (!_splitEdge(edges[i]))
@@ -122,11 +129,9 @@ void HE::HalfedgeMesh::_loopSubdivision()
 	}
 	// 删除旧边
 	edges.erase(edges.begin(), edges.begin() + oldEdgeNum);
-	cout << "_loopSubdivision New edges number : " << edges.size() << endl;
-	cout << "_loopSubdivision Face number : " << faces.size() << endl;
 	// 删除旧面
 	vector<shared_ptr<Face>>::iterator iter = faces.begin();
-	while (iter!=faces.end())
+	while (iter != faces.end())
 	{
 		if ((*iter)->ifNeedDelete == true)
 			iter = faces.erase(iter);
@@ -135,22 +140,31 @@ void HE::HalfedgeMesh::_loopSubdivision()
 	}
 
 	// flip
-	int num = 0;
-	for (int i = 0; i < edges.size(); i++) {
-		if (edges[i]->ifNew &&
-			edges[i]->he1->v->ifCalNewPos !=
-			edges[i]->he2->v->ifCalNewPos){
-			_flipEdge(edges[i]);
-			num++;
+	for (auto &e : edges)
+		if (e->ifNew &&
+			e->he1->v->ifCalNewPos !=
+			e->he2->v->ifCalNewPos)
+			_flipEdge(e);
+
+	/**/
+	// 更新顶点
+	for (const auto &V : vertices) {
+		if (V->ifCalNewPos) {
+			swap(V->pos, V->newPos);
+			V->ifCalNewPos = false;
 		}
 	}
-	cout << "Number of flip : " << num << endl;
 }
 
 double HE::HalfedgeMesh::_beta(int n)
 {
-	double nn = 1.0 / n;
+	double nn = 1.0 / (double)n;
 	return nn*(0.625 - pow(0.375 + 0.25*cos(2 * PI*nn), 2));
+	/*
+	if (n == 3)
+		return 3 / 16;
+	else
+		return 3 / (8 * (double)n);*/
 }
 
 void HE::HalfedgeMesh::_updateVertexInterior(shared_ptr<Halfedge>& he)
@@ -161,7 +175,7 @@ void HE::HalfedgeMesh::_updateVertexInterior(shared_ptr<Halfedge>& he)
 	while (tmp != he)
 	{
 		numOfTri += 1;
-		sumOfVAround += tmp->next.lock()->v->pos;
+		sumOfVAround += tmp->twin.lock()->v->pos;
 		tmp = tmp->prev.lock()->twin.lock();
 	}
 	double beta = _beta(numOfTri);
@@ -215,7 +229,6 @@ bool HE::HalfedgeMesh::_splitEdge(shared_ptr<Edge>& eToSplit)
 		newE[2]->isBoundary = true;
 		newHE[2]->e = newE[2];
 		// 断开原Face和Edge的相关link，确保不会再访问
-		/**/
 		eToSplit->he1->f.lock()->he = nullptr;
 		eToSplit->he1->f.lock()->ifNeedDelete = true;
 		eToSplit->he1 = nullptr;
@@ -380,6 +393,12 @@ void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceInde
 			e->he1->next.lock()->v->isOnBoundary = true;
 		}
 	}
+}
+
+void HE::HalfedgeMesh::LoopSubdivision(int iter)
+{
+	for (size_t i = 0; i < iter; i++)
+		_loopSubdivision();
 }
 
 shared_ptr<Edge> HE::HalfedgeMesh::findEdge(Index edgeID)

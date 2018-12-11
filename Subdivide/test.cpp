@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 	string name = "obj\\Cube.obj";
 	LoadMesh(testMesh, name);
 	cout << "Face number : " << testMesh.Faces().size() << endl;
-	testMesh._loopSubdivision();
+	testMesh.LoopSubdivision(2);
 	cout << "Face number : " << testMesh.Faces().size() << endl;
 	glutInit(&argc, argv);
 	InitGL();
