@@ -202,6 +202,7 @@ bool HE::HalfedgeMesh::_splitEdge(shared_ptr<Edge>& eToSplit)
 		newE[2]->isBoundary = true;
 		newHE[2]->e = newE[2];
 		// 断开原Face和Edge的相关link，确保不会再访问
+		/**/
 		eToSplit->he1->f.lock()->he = nullptr;
 		eToSplit->he1->f.lock()->ifNeedDelete = true;
 		eToSplit->he1 = nullptr;
@@ -238,6 +239,7 @@ bool HE::HalfedgeMesh::_splitEdge(shared_ptr<Edge>& eToSplit)
 		eToSplit->he1->f.lock()->he = nullptr;
 		eToSplit->he2->f.lock()->he = nullptr;
 		eToSplit->he1->f.lock()->ifNeedDelete = true;
+		eToSplit->he2->f.lock()->ifNeedDelete = true;
 		eToSplit->he1 = nullptr;
 		eToSplit->he2 = nullptr;
 		eToSplit->ifNeedDelete = true;
