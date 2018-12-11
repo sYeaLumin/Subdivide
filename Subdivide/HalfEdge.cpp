@@ -114,17 +114,25 @@ void HE::HalfedgeMesh::_loopSubdivision()
 	}
 
 	// split 
+	cout << "_loopSubdivision Old edges number : " << edges.size() << endl;
 	int oldEdgeNum = edges.size();
-	vector<shared_ptr<Edge>>::iterator oldEdgeEnd = edges.end();
-	vector<shared_ptr<Face>>::iterator oldFaceEnd = faces.end();
 	for (int i = 0; i < oldEdgeNum; i++) {
 		if (!_splitEdge(edges[i]))
 			cout << "Split Edge " << i << " failed!" << endl;
 	}
-	// É¾³ý¾É±ßºÍ¾ÉÃæ
-	edges.erase(edges.begin(), oldEdgeEnd);
-	faces.erase(faces.begin(), oldFaceEnd);
-
+	// É¾³ý¾É±ß
+	edges.erase(edges.begin(), edges.begin() + oldEdgeNum);
+	cout << "_loopSubdivision New edges number : " << edges.size() << endl;
+	cout << "_loopSubdivision Face number : " << faces.size() << endl;
+	// É¾³ý¾ÉÃæ
+	vector<shared_ptr<Face>>::iterator iter = faces.begin();
+	while (iter!=faces.end())
+	{
+		if ((*iter)->ifNeedDelete == true)
+			iter = faces.erase(iter);
+		else
+			iter++;
+	}
 	// flip
 }
 
@@ -319,6 +327,7 @@ void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceInde
 		cout << "HalfedgeMesh Build : Close surface !" << endl;
 	else {
 		cout << "HalfedgeMesh Build : Open surface  !" << endl;
+		cout << "Boudary Number : " << vertexPairSet .size() << endl;
 		set<VertexPair>::iterator iter = vertexPairSet.begin();
 		shared_ptr<Edge> e;
 		while (iter!= vertexPairSet.end())

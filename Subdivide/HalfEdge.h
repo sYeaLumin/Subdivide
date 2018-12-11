@@ -47,6 +47,7 @@ namespace HE {
 		weak_ptr<Face> f;
 
 	public:
+		Halfedge() {}
 		Halfedge(shared_ptr<Vertex>&  _v) {
 			v = _v;
 		}
@@ -78,6 +79,7 @@ namespace HE {
 		bool ifNeedDelete = false;
 
 	public:
+		Face(){}
 		Face(shared_ptr<Halfedge>& _he) {
 			he = _he;
 		}
@@ -128,6 +130,7 @@ namespace HE {
 		bool Load(string fileName);
 		void build(vector<Point3d>& vertexPos, vector<Index>& faceIndex, int vn = 3);
 		void LoopSubdivision(int iter);
+		void _loopSubdivision();
 
 		shared_ptr<Edge> findEdge(Index edgeID);
 		Point3d MinCoord() const;
@@ -135,7 +138,7 @@ namespace HE {
 		const FaceList Faces() const { return faces; }
 	private:
 		bool LoadObj(string fileName, vector<Point3d>& vertexPos, vector<Index>& faceIndex);
-		void _loopSubdivision();
+		//void _loopSubdivision();
 		double _beta(int n);
 		void _updateVertexInterior(shared_ptr<Halfedge>& he);
 		bool _splitEdge(shared_ptr<Edge>& eToSplit);

@@ -20,7 +20,9 @@ int main(int argc, char *argv[]) {
 
 	string name = "obj\\spoon.obj";
 	LoadMesh(testMesh, name);
-
+	cout << "Face number : " << testMesh.Faces().size() << endl;
+	testMesh._loopSubdivision();
+	cout << "Face number : " << testMesh.Faces().size() << endl;
 	glutInit(&argc, argv);
 	InitGL();
 	InitMenu();
