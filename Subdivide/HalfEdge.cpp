@@ -197,6 +197,7 @@ bool HE::HalfedgeMesh::_splitEdge(shared_ptr<Edge>& eToSplit)
 	// 如果是边界
 	if (eToSplit->isBoundary) {
 		newV = make_shared<Vertex>(eToSplit->newPos);
+		vertices.push_back(newV); // 添加新顶点
 		oldHE[0] = eToSplit->he1->next.lock();
 		oldHE[1] = eToSplit->he1->prev.lock();
 		// RightTri
@@ -242,6 +243,7 @@ bool HE::HalfedgeMesh::_splitEdge(shared_ptr<Edge>& eToSplit)
 	// 如果不是边界
 	else {
 		newV = make_shared<Vertex>(eToSplit->newPos);
+		vertices.push_back(newV); // 添加新顶点
 		oldHE[0] = eToSplit->he2->next.lock();
 		oldHE[1] = eToSplit->he2->prev.lock();
 		oldHE[2] = eToSplit->he1->next.lock();
@@ -391,6 +393,7 @@ void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceInde
 			e->isBoundary = true;
 			e->he1->v->isOnBoundary = true;
 			e->he1->next.lock()->v->isOnBoundary = true;
+			iter++;
 		}
 	}
 }
