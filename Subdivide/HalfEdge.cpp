@@ -82,7 +82,7 @@ void HE::HalfedgeMesh::_loopSubdivision()
 		if (e->isBoundary) {
 			// 计算中点
 			v1 = e->he1->v;
-			v2 = e->he1->prev.lock()->v;
+			v2 = e->he1->next.lock()->v;
 			e->newPos = 0.5*(v1->pos + v2->pos);
 			e->ifCalNewPos = true;
 			// 计算顶点更新坐标，存入newPos
