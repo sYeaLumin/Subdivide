@@ -360,7 +360,8 @@ void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceInde
 			iter = vertexPairSet.find(VertexPair(faceIndex[idxs[(j + 1) % vn]], faceIndex[idxs[j]]));
 			// 如果找到了对应的边，则对应半边已经加载
 			if (iter != vertexPairSet.end()) {
-				shared_ptr<Edge> edge = findEdge((*iter).eID);
+				shared_ptr<Edge> edge = edges[(*iter).eID];
+				//shared_ptr<Edge> edge = findEdge((*iter).eID);
 				hes[j]->e = edge;
 				hes[j]->twin = edge->he1;
 				edge->he2 = hes[j];
@@ -373,7 +374,9 @@ void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceInde
 				hes[j]->e = edge;
 				edge->he1 = hes[j];
 				edges.push_back(edge);
-				vertexPairSet.insert(VertexPair(edge->ID, faceIndex[idxs[j]], faceIndex[idxs[(j + 1) % vn]]));
+				edgeIdxSet.insert(edges.size()-1); // !
+				vertexPairSet.insert(VertexPair(edges.size() - 1, faceIndex[idxs[j]], faceIndex[idxs[(j + 1) % vn]]));
+				//vertexPairSet.insert(VertexPair(edge->ID, faceIndex[idxs[j]], faceIndex[idxs[(j + 1) % vn]]));
 			}
 		}
 	}
@@ -389,7 +392,8 @@ void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceInde
 		shared_ptr<Edge> e;
 		while (iter!= vertexPairSet.end())
 		{
-			e = findEdge((*iter).eID);
+			e = edges[(*iter).eID];
+			//e = findEdge((*iter).eID);
 			e->isBoundary = true;
 			e->he1->v->isOnBoundary = true;
 			e->he1->next.lock()->v->isOnBoundary = true;

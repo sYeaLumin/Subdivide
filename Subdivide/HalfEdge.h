@@ -126,6 +126,7 @@ namespace HE {
 		EdgeList edges;
 		FaceList faces;
 		set<VertexPair> vertexPairSet;
+		set<Index> edgeIdxSet;
 
 	public:
 		bool Load(string fileName);
