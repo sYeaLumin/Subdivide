@@ -18,7 +18,8 @@ void LoadMesh(HalfedgeMesh & mesh, string & modelName);
 HalfedgeMesh testMesh;
 int main(int argc, char *argv[]) {
 
-	string name = "obj\\six.obj";
+	//string name = "obj\\six.obj";
+	string name = "obj\\bunny.obj";
 	LoadMesh(testMesh, name);
 	cout << "Face number : " << testMesh.Faces().size() << endl;
 	testMesh.LoopSubdivision(1);
