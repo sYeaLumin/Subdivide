@@ -124,6 +124,7 @@ namespace HE {
 	private:
 		VertexList vertices;
 		EdgeList edges;
+		EdgeList newEdges;
 		FaceList faces;
 		set<VertexPair> vertexPairSet;
 		set<Index> edgeIdxSet;

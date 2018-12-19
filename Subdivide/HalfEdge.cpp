@@ -123,21 +123,25 @@ void HE::HalfedgeMesh::_loopSubdivision()
 
 	// split 
 	int oldEdgeNum = edges.size();
+	int oldFaceNum = faces.size();
+	EdgeList().swap(newEdges);
 	for (int i = 0; i < oldEdgeNum; i++) {
 		if (!_splitEdge(edges[i]))
 			cout << "Split Edge " << i << " failed!" << endl;
 	}
 	// 删除旧边
-	edges.erase(edges.begin(), edges.begin() + oldEdgeNum);
+	swap(edges, newEdges);
 	// 删除旧面
-	vector<shared_ptr<Face>>::iterator iter = faces.begin();
-	while (iter != faces.end())
-	{
-		if ((*iter)->ifNeedDelete == true)
-			iter = faces.erase(iter);
-		else
-			iter++;
+	FaceList newFaces;
+	newFaces.resize(oldFaceNum * 4);
+	size_t oF = 0;
+	for (size_t i = 0; i < oldFaceNum * 4; i++) {
+		while (faces[oF]->ifNeedDelete != false)
+			oF++;
+		swap(faces[oF], newFaces[i]);
+		oF++;
 	}
+	swap(faces, newFaces);
 
 	// flip
 	for (auto &e : edges)
@@ -188,7 +192,6 @@ bool HE::HalfedgeMesh::_splitEdge(shared_ptr<Edge>& eToSplit)
 	if (!eToSplit->ifCalNewPos)
 		return false;
 	shared_ptr<Vertex>  newV;
-	shared_ptr<Face> oldF[2];
 	shared_ptr<Face> newF[4];
 	shared_ptr<Halfedge> oldHE[4];
 	shared_ptr<Halfedge> newHE[8];
@@ -236,7 +239,7 @@ bool HE::HalfedgeMesh::_splitEdge(shared_ptr<Edge>& eToSplit)
 		eToSplit->ifNeedDelete = true;
 		// 加入新Face和Edge
 		for (size_t i = 0; i < 3; i++)
-			edges.push_back(newE[i]);
+			newEdges.push_back(newE[i]);
 		for (size_t i = 0; i < 2; i++)
 			faces.push_back(newF[i]);
 	}
@@ -276,7 +279,7 @@ bool HE::HalfedgeMesh::_splitEdge(shared_ptr<Edge>& eToSplit)
 		eToSplit->ifNeedDelete = true;
 		// 加入新Face和Edge
 		for (size_t i = 0; i < 4; i++) {
-			edges.push_back(newE[i]);
+			newEdges.push_back(newE[i]);
 			faces.push_back(newF[i]);
 		}
 	}
