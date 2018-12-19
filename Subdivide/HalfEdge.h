@@ -133,7 +133,6 @@ namespace HE {
 		bool Load(string fileName);
 		void build(vector<Point3d>& vertexPos, vector<Index>& faceIndex, int vn = 3);
 		void LoopSubdivision(int iter);
-		//void _loopSubdivision();
 
 		shared_ptr<Edge> findEdge(Index edgeID);
 		Point3d MinCoord() const;
