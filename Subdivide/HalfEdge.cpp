@@ -25,34 +25,28 @@ bool HE::HalfedgeMesh::LoadObj(string fileName, vector<Point3d>& vertexPos, vect
 	if (fileName.empty())
 		return false;
 	ifstream ifs(fileName);
-	if (ifs.fail())
+	if (!ifs.is_open())
 		return false;
 
-	char buf[1024], type[1024];
-	do
+	string oneLine;
+	string type;
+	while (getline(ifs,oneLine))
 	{
-		ifs.getline(buf, 1024);
-		istrstream iss(buf);
-		iss >> type;
-
-		// 顶点
-		if (strcmp(type, "v") == 0)
-		{
+		stringstream line(oneLine);
+		line >> type;
+		if (type == "v") {
 			double x, y, z;
-			iss >> x >> y >> z;
+			line >> x >> y >> z;
 			vertexPos.push_back(Point3d(x, y, z));
 		}
-
-		// 面
-		else if (strcmp(type, "f") == 0)
-		{
+		else if (type == "f") {
 			Index index[3];
-			iss >> index[0] >> index[1] >> index[2];
+			line >> index[0] >> index[1] >> index[2];
 			faceIndex.push_back(Index(index[0] - 1));
 			faceIndex.push_back(Index(index[1] - 1));
 			faceIndex.push_back(Index(index[2] - 1));
 		}
-	} while (!ifs.eof());
+	}
 	ifs.close();
 
 	return true;
@@ -200,6 +194,7 @@ bool HE::HalfedgeMesh::_splitEdge(shared_ptr<Edge>& eToSplit)
 	// 如果是边界
 	if (eToSplit->isBoundary) {
 		newV = make_shared<Vertex>(eToSplit->newPos);
+		newV->isOnBoundary = true;
 		vertices.push_back(newV); // 添加新顶点
 		oldHE[0] = eToSplit->he1->next.lock();
 		oldHE[1] = eToSplit->he1->prev.lock();
