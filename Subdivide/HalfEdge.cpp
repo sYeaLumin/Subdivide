@@ -8,7 +8,7 @@ bool HE::HalfedgeMesh::Load(string fileName)
 	string modelExtensions = fileName.substr(fileName.length() - 3, fileName.length());
 	if (strcmp(modelExtensions.c_str(), "obj") == 0) {
 		if (LoadObj(fileName, vertexPosList, faceIndexList)) {
-			cout << "Load " << fileName << endl;
+			//cout << "Load " << fileName << endl;
 			build(vertexPosList, faceIndexList, 3);
 			minCoord = MinCoord();
 			maxCoord = MaxCoord();
@@ -382,10 +382,10 @@ void HE::HalfedgeMesh::build(vector<Point3d>& vertexPos, vector<Index>& faceInde
 	delete[] hes;
 
 	if (vertexPairSet.size() == 0) 
-		cout << "HalfedgeMesh Build : Close surface !" << endl;
+		cout << "HalfedgeMesh Build : Close surface!" << endl;
 	else {
-		cout << "HalfedgeMesh Build : Open surface  !" << endl;
-		cout << "Boudary Number : " << vertexPairSet .size() << endl;
+		cout << "HalfedgeMesh Build : Open surface!" << endl;
+		cout << "HalfedgeMesh Build : Boudary Number " << vertexPairSet .size() << endl;
 		set<VertexPair>::iterator iter = vertexPairSet.begin();
 		shared_ptr<Edge> e;
 		while (iter!= vertexPairSet.end())
@@ -404,6 +404,31 @@ void HE::HalfedgeMesh::LoopSubdivision(int iter)
 {
 	for (size_t i = 0; i < iter; i++)
 		_loopSubdivision();
+}
+
+void HE::HalfedgeMesh::saveObj(string fileName)
+{
+	for (size_t i = 0; i < vertices.size(); i++)
+		vertices[i]->idxForSave = i + 1;
+
+	ofstream fout(fileName);
+	if (fout.is_open()) {
+		fout << "# vetices\t" << vertices.size() << endl;
+		fout << "# faces\t" << faces.size() << endl;
+		for (const auto &v : vertices)
+			fout << "v " << v->pos[0] << " " << v->pos[1] << " " << v->pos[2] << endl;
+		for (const auto &f : faces) {
+			shared_ptr<Halfedge> h = f->he;
+			fout << "f ";
+			do
+			{
+				fout << h->v->idxForSave << " ";
+				h = h->next.lock();
+			} while (h!=f->he);
+			fout << endl;
+		}
+	}
+	fout.close();
 }
 
 shared_ptr<Edge> HE::HalfedgeMesh::findEdge(Index edgeID)

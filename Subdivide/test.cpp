@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <time.h>
 #include <GL/freeglut.h>
 #include "TrackBall.h"
 #include "HalfEdge.h"
@@ -9,6 +10,15 @@
 using namespace std;
 using namespace HE;
 
+void help() {
+	cout << "Help:" << endl;
+	cout << "   > Subdivide.exe [objPath] [subdivideTimes]" << endl;
+	cout << "   > ！！ [objPath] \t the path of the obj file" << endl;
+	cout << "   > ！！ [subdivideTimes]  the times want to subdivide" << endl;
+	cout << "   cmd example > Subdivide.exe test1.obj" << endl;
+	cout << "   cmd example > Subdivide.exe test2.obj 3" << endl;
+	cout << "   You could use 'D' to subdivde the mesh, 'S' to save the new mesh as obj files.\n" << endl;
+}
 void InitGL();
 void InitMenu();
 void ScreenToNCC(int x, int y, float & nccX, float & nccY);
@@ -16,21 +26,40 @@ void SetBoundaryBox(const Point3d & bmin, const Point3d & bmax);
 void LoadMesh(HalfedgeMesh & mesh, string & modelName);
 
 HalfedgeMesh testMesh;
+string meshName = "obj/spoon.obj";
+string newObjName;
+int subdivdeTimes = 0;
+double duration;
+clock_t start, finish;
 int main(int argc, char *argv[]) {
+	if (argc == 2) {
+		meshName = argv[1];
+	}
+	if (argc == 3) {
+		meshName = argv[1];
+		subdivdeTimes = atoi(argv[2]);
+	}
+	else {
+		help();
+		return 0;
+	}
+	help();
 
-	//string name = "obj\\Cylinder0.obj";
-	string name = "obj\\six.obj";
-	LoadMesh(testMesh, name);
-	cout << "Face number : " << testMesh.Faces().size() << endl;
-	testMesh.LoopSubdivision(2);
-	cout << "Face number : " << testMesh.Faces().size() << endl;
+	LoadMesh(testMesh, meshName);
+	cout << "Original Mesh : " << testMesh.Faces().size() << " faces." << endl;
+	if (subdivdeTimes > 0) {
+		start = clock();
+		testMesh.LoopSubdivision(subdivdeTimes);
+		finish = clock();
+		cout << "After " << subdivdeTimes << " subdivition : "
+			<< testMesh.Faces().size() << " faces   "
+			<< "using " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds" << endl;
+	}
 
 	glutInit(&argc, argv);
 	InitGL();
 	InitMenu();
-
 	glutMainLoop();
-	system("pause");
 	return 0;
 }
 
@@ -259,9 +288,21 @@ void KeyboardFunc(unsigned char ch, int x, int y)
 	int tmp;
 	switch (ch)
 	{
-	case 'z':case 'Z':
+	case 's':case 'S':
+		cout << "Save...";
+		newObjName = meshName.substr(0, meshName.find_last_of('.'))
+			+ to_string(subdivdeTimes) + ".obj";
+		testMesh.saveObj(newObjName);
+		cout << "Done at " << newObjName<< endl;
 		break;
-	case 'c':case 'C':
+	case 'd':case 'D':
+		start = clock();
+		testMesh.LoopSubdivision(1);
+		finish = clock();
+		subdivdeTimes++;
+		cout << "After " << subdivdeTimes << " subdivition : "
+			<< testMesh.Faces().size() << " faces   "
+			<< "using " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds" << endl;
 		break;
 	case 27:
 		exit(0);

@@ -31,6 +31,7 @@ namespace HE {
 		bool ifCalNewPos = false;
 		Point3d newPos;
 		bool isOnBoundary = false;
+		Index idxForSave;
 
 	public:
 		Vertex(Point3d& p) :
@@ -134,6 +135,7 @@ namespace HE {
 		bool Load(string fileName);
 		void build(vector<Point3d>& vertexPos, vector<Index>& faceIndex, int vn = 3);
 		void LoopSubdivision(int iter);
+		void saveObj(string fileName);
 
 		shared_ptr<Edge> findEdge(Index edgeID);
 		Point3d MinCoord() const;
