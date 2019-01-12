@@ -144,7 +144,6 @@ void HE::HalfedgeMesh::_loopSubdivision()
 			e->he2->v->ifCalNewPos)
 			_flipEdge(e);
 
-	/**/
 	// 更新顶点
 	for (const auto &V : vertices) {
 		if (V->ifCalNewPos) {
@@ -158,8 +157,8 @@ double HE::HalfedgeMesh::_beta(int n)
 {
 	double nn = 1.0 / (double)n;
 	return nn*(0.625 - pow(0.375 + 0.25*cos(2 * PI*nn), 2));
-	/*
-	if (n == 3)
+	
+	/*if (n == 3)
 		return 3 / 16;
 	else
 		return 3 / (8 * (double)n);*/
@@ -231,7 +230,7 @@ bool HE::HalfedgeMesh::_splitEdge(shared_ptr<Edge>& eToSplit)
 		eToSplit->he1->f.lock()->he = nullptr;
 		eToSplit->he1->f.lock()->ifNeedDelete = true;
 		eToSplit->he1 = nullptr;
-		eToSplit->ifNeedDelete = true;
+		//eToSplit->ifNeedDelete = true;
 		// 加入新Face和Edge
 		for (size_t i = 0; i < 3; i++)
 			newEdges.push_back(newE[i]);
@@ -271,7 +270,7 @@ bool HE::HalfedgeMesh::_splitEdge(shared_ptr<Edge>& eToSplit)
 		eToSplit->he2->f.lock()->ifNeedDelete = true;
 		eToSplit->he1 = nullptr;
 		eToSplit->he2 = nullptr;
-		eToSplit->ifNeedDelete = true;
+		//eToSplit->ifNeedDelete = true;
 		// 加入新Face和Edge
 		for (size_t i = 0; i < 4; i++) {
 			newEdges.push_back(newE[i]);

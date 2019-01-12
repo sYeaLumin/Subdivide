@@ -6,6 +6,7 @@
 #include <GL/freeglut.h>
 #include "TrackBall.h"
 #include "HalfEdge.h"
+#define MAX_CHAR        128
 
 using namespace std;
 using namespace HE;
@@ -20,7 +21,6 @@ void help() {
 	cout << "   You could use 'D' to subdivde the mesh, 'S' to save the new mesh as obj files.\n" << endl;
 }
 void InitGL();
-void InitMenu();
 void ScreenToNCC(int x, int y, float & nccX, float & nccY);
 void SetBoundaryBox(const Point3d & bmin, const Point3d & bmax);
 void LoadMesh(HalfedgeMesh & mesh, string & modelName);
@@ -31,11 +31,13 @@ string newObjName;
 int subdivdeTimes = 0;
 double duration;
 clock_t start, finish;
+double usingTime = 0;
 int main(int argc, char *argv[]) {
 	if (argc == 2) {
 		meshName = argv[1];
 	}
-	if (argc == 3) {
+	else if (argc == 1) {}
+	else if (argc == 3) {
 		meshName = argv[1];
 		subdivdeTimes = atoi(argv[2]);
 	}
@@ -51,6 +53,7 @@ int main(int argc, char *argv[]) {
 		start = clock();
 		testMesh.LoopSubdivision(subdivdeTimes);
 		finish = clock();
+		usingTime += (double)(finish - start) / CLOCKS_PER_SEC;
 		cout << "After " << subdivdeTimes << " subdivition : "
 			<< testMesh.Faces().size() << " faces   "
 			<< "using " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds" << endl;
@@ -58,7 +61,6 @@ int main(int argc, char *argv[]) {
 
 	glutInit(&argc, argv);
 	InitGL();
-	InitMenu();
 	glutMainLoop();
 	return 0;
 }
@@ -73,25 +75,40 @@ void LoadMesh(HalfedgeMesh & mesh, string & modelName)
 	xtrans = ytrans = 0.0;
 }
 
+// Print words
+void drawString(const char * str)
+{
+	static bool isFirstCall = true;
+	static GLuint lists;
+
+	if (isFirstCall) {
+		isFirstCall = false;
+		lists = glGenLists(MAX_CHAR);
+		wglUseFontBitmaps(wglGetCurrentDC(), 0, MAX_CHAR, lists);
+	}
+	for (; *str != '\n'; ++str)
+		glCallList(lists + *str);
+}
+
+
 /**********************************************************************************/
 /****************************** OpenGL Part **************************************/
 /**********************************************************************************/
 int mainMenu, displayMenu;						// glut menu handlers
-int winWidth = 1400, winHeight = 800;
+int winWidth = 800, winHeight = 600;
 int between = 35;
 double winAspect;
-string winName = "Test";
+string winName = "Subdivide Test";
 
-double zNear = 1.0, zFar = 100.0;				// clipping
+double zNear = 1.0, zFar = 100.0;		
 double g_fov = 45.0;
 Point3d g_center;
 double g_sdepth, sdepth = 10, lastNccX = 0.0, lastNccY = 0.0;
-double zDelta;									// zoom in, zoom out
+double zDelta;	
 int viewport[4];
 bool isLeftDown = false, isRightDown = false, isMidDown = false;
 TrackBall trackball;
 
-void MenuCallback(int value);
 void DisplayFunc();
 void KeyboardFunc(unsigned char ch, int x, int y);
 void ReshapeFunc(int width, int height);
@@ -99,22 +116,6 @@ void MotionFunc(int x, int y);
 void MouseWheelFunc(int button, int dir, int x, int y);
 void MouseFunc(int button, int state, int x, int y);
 void DrawFlatShaded(HalfedgeMesh & mesh);
-
-// GLUT menu callback function
-void MenuCallback(int value)
-{
-	vector<int> newFList;
-	switch (value)
-	{
-	case 99:
-		exit(0);
-		break;
-	default:
-		break;
-	}
-	glutPostRedisplay();
-}
-
 
 void DrawFlatShaded(HalfedgeMesh & mesh)
 {
@@ -139,51 +140,6 @@ void DrawFlatShaded(HalfedgeMesh & mesh)
 	glEnd();
 	glDisable(GL_LIGHTING);
 }
-
-void DrawMeshWithDifferentColor(HalfedgeMesh & mesh)
-{
-	float rotation[16];
-	trackball.m_rotation.GetMatrix(rotation);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(g_fov, winAspect, zNear, zFar);
-	//glOrtho(-2.0, 2.0, -2.0, 2.0, zNear, zFar);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glTranslated(xtrans, ytrans, -sdepth);
-	glMultMatrixf(rotation);
-	glTranslated(-g_center[0], -g_center[1], -g_center[2]);
-
-	FaceList fList = mesh.Faces();
-	glShadeModel(GL_FLAT);
-	glDisable(GL_LIGHTING);
-	glBegin(GL_TRIANGLES);
-	for (size_t i = 0; i<fList.size(); i++) {
-		shared_ptr<Face> f = fList[i];
-		const Point3d & pos1 = f->he->v->pos;
-		const Point3d & pos2 = f->he->next.lock()->v->pos;
-		const Point3d & pos3 = f->he->next.lock()->next.lock()->v->pos;
-
-		int r = (i & 0x000000FF) >> 0;
-		int g = (i & 0x0000FF00) >> 8;
-		int b = (i & 0x00FF0000) >> 16;
-		glColor3f(r / 255.0f, g / 255.0f, b / 255.0f);
-
-		Point3d normal = (pos2 - pos1).Cross(pos3 - pos1);
-		normal /= normal.L2Norm();
-		glNormal3dv(normal.ToArray());
-		glVertex3dv(pos1.ToArray());
-		glVertex3dv(pos2.ToArray());
-		glVertex3dv(pos3.ToArray());
-	}
-	glEnd();
-
-	glFlush();
-	glFinish();
-}
-
 
 void InitGL()
 {
@@ -210,22 +166,9 @@ void InitGL()
 	glutReshapeFunc(ReshapeFunc);
 	glutDisplayFunc(DisplayFunc);
 	glutKeyboardFunc(KeyboardFunc);
-	//glutSpecialFunc(SpecialKeyFcn);
 	glutMouseFunc(MouseFunc);
 	glutMotionFunc(MotionFunc);
 	glutMouseWheelFunc(MouseWheelFunc);
-}
-
-int modelMune;
-void InitMenu()
-{
-	modelMune = glutCreateMenu(MenuCallback);
-	//glutAddMenuEntry("Mdoel 1", MODEL_ONE);
-	mainMenu = glutCreateMenu(MenuCallback);
-	//glutAddMenuEntry("Display", FLATSHADED);
-	glutAddSubMenu("Change Model", modelMune);
-	glutAddMenuEntry("Exit", 99);
-	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
 void ScreenToNCC(int x, int y, float & nccX, float & nccY)
@@ -247,7 +190,6 @@ void SetBoundaryBox(const Point3d & bmin, const Point3d & bmax)
 	zDelta = sdepth / 40;
 }
 
-// GLUT reshape callback function
 void ReshapeFunc(int width, int height)
 {
 	winWidth = width;
@@ -270,15 +212,45 @@ void DisplayFunc()
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-
 	glPushMatrix();
 	glTranslated(xtrans, ytrans, -sdepth);
 	glMultMatrixf(rotation);
 	glTranslated(-g_center[0], -g_center[1], -g_center[2]);
-	
+	// Draw
 	DrawFlatShaded(testMesh);
-
 	glPopMatrix();
+
+	// ÎÄ×Ö
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0, winWidth, 0, winHeight);
+	glEnable(GL_DEPTH_TEST);
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glRasterPos2f(10.0f, winHeight - 20.0f);
+	drawString("Use keyboard :\n");
+	glRasterPos2f(10.0f, winHeight - 40.0f);
+	drawString("KEY 'D'  to subdivide mesh\n");
+	glRasterPos2f(10.0f, winHeight - 60.0f);
+	drawString("KEY 'S'  to save new mesh\n");
+
+	string faceNum = "Face number : ";
+	faceNum += to_string(testMesh.Faces().size());
+	faceNum += "\n";
+	glRasterPos2f(10.0f, winHeight - 100.0f);
+	drawString(faceNum.c_str());
+
+	string subTimes = "Subdivition Time : ";
+	subTimes += to_string(subdivdeTimes);
+	subTimes += "\n";
+	glRasterPos2f(10.0f, winHeight - 120.0f);
+	drawString(subTimes.c_str());
+
+	char str[40];
+	sprintf_s(str, "Total Cost time : %.3f seconds\n", usingTime);
+	glRasterPos2f(10.0f, winHeight - 140.0f);
+	drawString(str);
 
 	glutSwapBuffers();
 }
@@ -300,6 +272,7 @@ void KeyboardFunc(unsigned char ch, int x, int y)
 		testMesh.LoopSubdivision(1);
 		finish = clock();
 		subdivdeTimes++;
+		usingTime += (double)(finish - start) / CLOCKS_PER_SEC;
 		cout << "After " << subdivdeTimes << " subdivition : "
 			<< testMesh.Faces().size() << " faces   "
 			<< "using " << (double)(finish - start) / CLOCKS_PER_SEC << " seconds" << endl;

@@ -1,14 +1,8 @@
-// Class: TrackBall, OpenGL
-#ifndef __TRACKBALL_H__
-#define __TRACKBALL_H__
-
+#pragma once
 #include <iostream>
 #include "Quaternion.h"
 #include "point3.h"
 using namespace std;
-
-// the coordinate should be NCC;
-
 class TrackBall
 {
 public:
@@ -28,7 +22,3 @@ public:
 
 	Point3f lastPos3D;
 };
-
-
-
-#endif

@@ -1,7 +1,4 @@
-// Class: Quaternion, written by XiaojieXu, 20160427
-#ifndef __QUATERNION_H__
-#define __QUATERNION_H__
-
+#pragma once
 #include <iostream>
 using namespace std;
 
@@ -33,5 +30,3 @@ private:
 	void PutXYZtoQuaternion(const float & x, const float & y, const float & z);
 	void Normalize();
 };
-#endif
-

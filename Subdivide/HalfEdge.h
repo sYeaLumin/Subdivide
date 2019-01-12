@@ -27,15 +27,14 @@ namespace HE {
 	class Vertex
 	{
 	public:
-		Point3d pos;
-		bool ifCalNewPos = false;
-		Point3d newPos;
-		bool isOnBoundary = false;
-		Index idxForSave;
+		Point3d pos;											// 顶点坐标
+		Point3d newPos;									// 更新后顶点坐标
+		bool ifCalNewPos = false;					// 用于区分新旧顶点
+		bool isOnBoundary = false;				// 用于判断是否位于边界
+		Index idxForSave;								// 用于新mesh写出
 
 	public:
-		Vertex(Point3d& p) :
-			pos(p) {}
+		Vertex(Point3d& p) : pos(p) {}
 	};
 
 	class Halfedge
@@ -61,11 +60,10 @@ namespace HE {
 		Index ID;
 		shared_ptr<Halfedge> he1;
 		shared_ptr<Halfedge> he2;
-		bool ifCalNewPos = false;
-		bool ifNew = false;
-		Point3d newPos;
-		bool isBoundary = false;
-		bool ifNeedDelete = false;
+		Point3d newPos;									// 用于存储新顶点的坐标
+		bool ifCalNewPos = false;					// 用于判断是否计算了新顶点
+		bool ifNew = false;								// 用于判断是否为新插入的边
+		bool isBoundary = false;						// 用于判断是否为边界
 
 	public:
 		Edge() {
